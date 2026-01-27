@@ -243,78 +243,63 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                   return
                 }
 
-                // Retell envía las transcripciones en el objeto `transcript`
-                if (update.transcript && Array.isArray(update.transcript)) {
-                  // Obtener el último mensaje de cada tipo
-                  const userMessages = update.transcript.filter((item: any) => item.role === "user")
-                  const assistantMessages = update.transcript.filter((item: any) => item.role === "agent")
-
-                  // Procesar mensaje del usuario (solo el último)
-                  if (userMessages.length > 0) {
-                    const lastUserMessage = userMessages[userMessages.length - 1]
-                    if (lastUserMessage.content && lastUserMessage.content.trim()) {
-                      setMessages((prev: VoiceMessage[]) => {
-                        // Verificar si ya existe este mensaje de usuario
-                        const existingUserMsg = prev.find(
-                          m => m.type === "user" && m.text === lastUserMessage.content
-                        )
-                        if (existingUserMsg) return prev
-
-                        return [
-                          ...prev,
-                          {
-                            text: lastUserMessage.content,
-                            timestamp: Date.now(),
-                            type: "user",
-                          },
-                        ]
-                      })
-                    }
+                // Según documentación oficial de Retell:
+                // update.transcript contiene las últimas 5 oraciones del historial completo
+                // Cada item tiene { role: "agent"|"user", content: string, words: [...] }
+                // Debemos "replace/update the existing message based on the last item"
+                if (update.transcript && Array.isArray(update.transcript) && update.transcript.length > 0) {
+                  // Obtener el último utterance del transcript
+                  const lastUtterance = update.transcript[update.transcript.length - 1]
+                  
+                  if (!lastUtterance?.content || !lastUtterance.content.trim()) {
+                    return
                   }
 
-                  // Procesar mensaje del asistente (solo el último, actualizar si está hablando)
-                  if (assistantMessages.length > 0) {
-                    const lastAssistantMessage = assistantMessages[assistantMessages.length - 1]
-                    if (lastAssistantMessage.content && lastAssistantMessage.content.trim()) {
-                      setMessages((prev: VoiceMessage[]) => {
-                        const lastMsg = prev[prev.length - 1]
+                  const messageType = lastUtterance.role === "user" ? "user" : "assistant"
+                  const content = lastUtterance.content.trim()
 
-                        // Si el agente está hablando y el último mensaje es del asistente,
-                        // actualizar ese mensaje en lugar de crear uno nuevo
-                        if (
-                          isAgentTalkingRef.current &&
-                          lastMsg?.type === "assistant" &&
-                          lastMsg.text !== lastAssistantMessage.content
-                        ) {
-                          // Actualizar el último mensaje del asistente
-                          lastAssistantMessageRef.current = lastAssistantMessage.content
-                          return [
-                            ...prev.slice(0, -1),
-                            {
-                              ...lastMsg,
-                              text: lastAssistantMessage.content,
-                              timestamp: Date.now(),
-                            },
-                          ]
-                        }
+                  setMessages((prev: VoiceMessage[]) => {
+                    const lastMsg = prev[prev.length - 1]
 
-                        // Si no está hablando o es un mensaje nuevo, agregar
-                        if (lastMsg?.text !== lastAssistantMessage.content) {
-                          lastAssistantMessageRef.current = lastAssistantMessage.content
-                          return [
-                            ...prev,
-                            {
-                              text: lastAssistantMessage.content,
-                              timestamp: Date.now(),
-                              type: "assistant",
-                            },
-                          ]
-                        }
-
-                        return prev
-                      })
+                    // Caso 1: El agente está hablando Y el último mensaje es del asistente
+                    // -> ACTUALIZAR el mensaje existente (transcripción incremental)
+                    if (
+                      messageType === "assistant" &&
+                      isAgentTalkingRef.current &&
+                      lastMsg?.type === "assistant"
+                    ) {
+                      // Solo actualizar si el contenido cambió
+                      if (lastMsg.text === content) return prev
+                      
+                      console.log("[Retell] Updating assistant message (incremental)")
+                      return [
+                        ...prev.slice(0, -1),
+                        {
+                          ...lastMsg,
+                          text: content,
+                          timestamp: Date.now(),
+                        },
+                      ]
                     }
-                  }
+
+                    // Caso 2: Es un mensaje nuevo (diferente tipo o contenido diferente)
+                    // -> CREAR nuevo mensaje
+                    if (lastMsg?.text !== content || lastMsg?.type !== messageType) {
+                      console.log("[Retell] Adding new message:", messageType, content.substring(0, 50) + "...")
+                      return [
+                        ...prev,
+                        {
+                          text: content,
+                          timestamp: Date.now(),
+                          type: messageType,
+                        },
+                      ]
+                    }
+
+                    // Caso 3: Es exactamente el mismo mensaje
+                    // -> NO hacer nada
+                    return prev
+                  })
                 }
               },
               onError: (error: any) => {
