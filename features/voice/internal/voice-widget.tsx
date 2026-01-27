@@ -233,7 +233,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
               onAgentStopTalking: () => {
                 console.log("[Retell] Agent stopped talking")
                 isAgentTalkingRef.current = false
-                lastAssistantMessageRef.current = ""
+                // NO limpiar lastAssistantMessageRef aquí - lo necesitamos para evitar duplicados
               },
               onUpdate: (update: any) => {
                 console.log("[Retell] Update received:", update)
@@ -258,6 +258,14 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                   const messageType = lastUtterance.role === "user" ? "user" : "assistant"
                   const content = lastUtterance.content.trim()
 
+                  // Para mensajes del asistente, verificar si ya lo procesamos
+                  if (messageType === "assistant") {
+                    // Si ya procesamos este contenido exacto, ignorar
+                    if (lastAssistantMessageRef.current === content) {
+                      return
+                    }
+                  }
+
                   setMessages((prev: VoiceMessage[]) => {
                     const lastMsg = prev[prev.length - 1]
 
@@ -272,6 +280,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                       if (lastMsg.text === content) return prev
                       
                       console.log("[Retell] Updating assistant message (incremental)")
+                      lastAssistantMessageRef.current = content
                       return [
                         ...prev.slice(0, -1),
                         {
@@ -286,6 +295,12 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                     // -> CREAR nuevo mensaje
                     if (lastMsg?.text !== content || lastMsg?.type !== messageType) {
                       console.log("[Retell] Adding new message:", messageType, content.substring(0, 50) + "...")
+                      
+                      // Guardar el contenido del asistente para evitar duplicados futuros
+                      if (messageType === "assistant") {
+                        lastAssistantMessageRef.current = content
+                      }
+                      
                       return [
                         ...prev,
                         {
