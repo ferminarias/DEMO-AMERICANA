@@ -221,18 +221,44 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
 
                 // Retell envía las transcripciones en el objeto `transcript`
                 if (update.transcript && Array.isArray(update.transcript)) {
-                  // Procesar las últimas transcripciones
+                  // Crear un mapa de mensajes por rol para mantener solo el último de cada uno
+                  const transcriptMap = new Map<string, any>()
+                  
                   update.transcript.forEach((item: any) => {
                     if (item.content && item.content.trim()) {
-                      const messageType = item.role === "user" ? "user" : "assistant"
+                      // Usar un identificador único por cada par rol-contenido
+                      const key = `${item.role}-${item.content.substring(0, 20)}`
+                      transcriptMap.set(key, item)
+                    }
+                  })
+
+                  // Procesar los mensajes únicos
+                  transcriptMap.forEach((item) => {
+                    const messageType = item.role === "user" ? "user" : "assistant"
+                    
+                    setMessages((prev: VoiceMessage[]) => {
+                      const lastMessage = prev[prev.length - 1]
                       
-                      // Evitar duplicados - solo agregar si el mensaje es nuevo
-                      setMessages((prev: VoiceMessage[]) => {
-                        const lastMessage = prev[prev.length - 1]
-                        if (lastMessage?.text === item.content && lastMessage?.type === messageType) {
-                          return prev
-                        }
-                        
+                      // Si el último mensaje es del mismo tipo (usuario o asistente)
+                      // y el contenido nuevo es más largo, actualizar en lugar de agregar
+                      if (
+                        lastMessage?.type === messageType &&
+                        item.content.length > lastMessage.text.length &&
+                        item.content.startsWith(lastMessage.text.substring(0, 10))
+                      ) {
+                        // Actualizar el último mensaje (transcripción incremental)
+                        return [
+                          ...prev.slice(0, -1),
+                          {
+                            ...lastMessage,
+                            text: item.content,
+                            timestamp: Date.now(),
+                          },
+                        ]
+                      }
+                      
+                      // Si es un mensaje completamente nuevo o de diferente tipo
+                      if (lastMessage?.text !== item.content) {
                         return [
                           ...prev,
                           {
@@ -241,8 +267,11 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                             type: messageType,
                           },
                         ]
-                      })
-                    }
+                      }
+                      
+                      // Si es exactamente el mismo, no hacer nada
+                      return prev
+                    })
                   })
                 }
               },
