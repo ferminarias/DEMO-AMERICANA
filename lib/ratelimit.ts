@@ -66,9 +66,9 @@ export const apiLimiter = new SimpleRateLimiter({
   duration: 60, // Per minute
 })
 
-// Rate limiter for Retell voice calls (más restrictivo)
+// Rate limiter for Retell voice calls (configuración más permisiva)
 export const retellCallLimiter = new SimpleRateLimiter({
   keyPrefix: "retell_call",
-  points: 5, // Máximo 5 llamadas
-  duration: 300, // Por 5 minutos (para evitar abuso)
+  points: 20, // Máximo 20 llamadas (más permisivo)
+  duration: 60, // Por 1 minuto
 })

@@ -3,7 +3,6 @@ import { headers } from "next/headers"
 import { retellCallLimiter } from "@/lib/ratelimit"
 
 export const dynamic = "force-dynamic"
-export const runtime = "nodejs"
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,22 +104,14 @@ export async function POST(request: NextRequest) {
 
       const callData = await retellResponse.json()
 
-      return NextResponse.json(
-        {
-          access_token: callData.access_token,
-          call_id: callData.call_id,
-          agentId: agentId,
-          configured: true,
-          callCreated: true,
-          clientIp: clientIp, // For debugging purposes
-        },
-        {
-          headers: {
-            "Cache-Control": "no-store, no-cache, must-revalidate",
-            "X-Robots-Tag": "noindex, nofollow",
-          },
-        }
-      )
+      return NextResponse.json({
+        access_token: callData.access_token,
+        call_id: callData.call_id,
+        agentId: agentId,
+        configured: true,
+        callCreated: true,
+        clientIp: clientIp, // For debugging purposes
+      })
     } catch (callError) {
       console.error("Web call creation error:", callError)
       return NextResponse.json({

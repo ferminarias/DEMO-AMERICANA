@@ -22,16 +22,5 @@
         }
       ]
     }
-  ],
-  "functions": {
-    "app/api/retell/create-web-call/route.ts": {
-      "maxDuration": 60
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/retell/:path*",
-      "destination": "/api/retell/:path*"
-    }
   ]
 }
