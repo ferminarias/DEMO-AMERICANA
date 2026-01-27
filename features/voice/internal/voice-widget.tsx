@@ -652,7 +652,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
     toast({
       title: "Historial limpiado",
       description: "¡Listo para una nueva conversación!",
-      duration: 2000,
+      duration: 1000,
     })
   }
 
