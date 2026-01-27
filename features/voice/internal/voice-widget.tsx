@@ -204,6 +204,24 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                 console.log("[Retell] Call ended")
                 sessionActiveRef.current = false
                 setVoiceStatus("idle")
+                
+                // Mensaje de despedida cuando la llamada termina automáticamente
+                setMessages((prev: VoiceMessage[]) => {
+                  // Solo agregar si el último mensaje no es ya una despedida
+                  const lastMessage = prev[prev.length - 1]
+                  if (lastMessage?.text.includes("Gracias por conversar")) {
+                    return prev
+                  }
+                  
+                  return [
+                    ...prev,
+                    {
+                      text: "¡Gracias por tu tiempo! Si necesitas algo más, no dudes en iniciar una nueva conversación o contactarnos por WhatsApp. 😊",
+                      timestamp: Date.now(),
+                      type: "assistant",
+                    },
+                  ]
+                })
               },
               onAgentStartTalking: () => {
                 console.log("[Retell] Agent started talking")
@@ -438,17 +456,24 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
     sessionActiveRef.current = false
     clearSimulationTimers()
     setVoiceStatus("idle")
-    setMessages([])
     setIsMuted(false)
-    const toastInstance = toast({
-      title: "Llamada finalizada",
-      description: "La conversación por voz se cerró correctamente.",
-    })
     
-    // Auto-dismiss después de 3 segundos
-    setTimeout(() => {
-      toastInstance.dismiss()
-    }, 3000)
+    // Agregar mensaje de despedida amigable en lugar de borrar todo
+    setMessages((prev: VoiceMessage[]) => [
+      ...prev,
+      {
+        text: "¡Gracias por conversar conmigo! Si necesitas más información, puedes iniciar una nueva llamada o contactarnos por WhatsApp. 😊",
+        timestamp: Date.now(),
+        type: "assistant",
+      },
+    ])
+    
+    // Toast más amigable
+    toast({
+      title: "✓ Llamada finalizada",
+      description: "Espero haber sido de ayuda. ¡Hasta pronto!",
+      duration: 4000,
+    })
   }
 
 
@@ -584,15 +609,28 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
 
   const handleWidgetClose = () => {
     try {
-      stopVoiceCall()
-      setTextMessages([])
-      setMessages([])
+      // Solo detener la llamada si está activa, pero mantener el historial
+      if (voiceStatus === "connected") {
+        stopVoiceCall()
+      }
+      // No borrar mensajes para que el usuario pueda revisar la conversación
       setIsTextChatActive(false)
     } catch (e) {
-      console.error("[v0] Error cleaning up on close:", e)
+      console.error("[Retell] Error cleaning up on close:", e)
     }
   }
 
+
+  const clearHistory = () => {
+    setMessages([])
+    setTextMessages([])
+    setCurrentTranscription("")
+    toast({
+      title: "Historial limpiado",
+      description: "¡Listo para una nueva conversación!",
+      duration: 2000,
+    })
+  }
 
   const chatContent = (
     <div className="flex flex-col h-full bg-white overflow-auto">
@@ -600,6 +638,8 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
         getStatusColor={getStatusColor}
         getStatusText={getStatusText}
         variant={isEmbedMode ? "embed" : "sheet"}
+        onClearHistory={clearHistory}
+        showClearButton={messages.length > 0 && voiceStatus === "idle"}
       />
 
       <div className="flex-1 relative overflow-y-auto">
