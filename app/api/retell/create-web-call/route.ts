@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { headers } from "next/headers"
+import { retellCallLimiter } from "@/lib/ratelimit"
 
 export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +12,26 @@ export async function POST(request: NextRequest) {
     const forwarded = headersList.get("x-forwarded-for")
     const realIp = headersList.get("x-real-ip")
     const clientIp = forwarded?.split(",")[0] || realIp || "unknown"
+
+    // Rate limiting para prevenir abuso
+    try {
+      await retellCallLimiter.consume(clientIp)
+    } catch (rateLimitError: any) {
+      const waitSeconds = Math.ceil((rateLimitError.msBeforeNext || 0) / 1000)
+      console.warn(`[RATE_LIMIT] IP ${clientIp} exceeded limit, wait ${waitSeconds}s`)
+      return NextResponse.json(
+        {
+          error: `Demasiadas solicitudes. Por favor, espera ${waitSeconds} segundos.`,
+          configured: false,
+        },
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": waitSeconds.toString(),
+          }
+        },
+      )
+    }
 
     // Validación de origen más robusta (servidor)
     const origin = headersList.get("origin") || headersList.get("referer") || ""
@@ -83,14 +105,22 @@ export async function POST(request: NextRequest) {
 
       const callData = await retellResponse.json()
 
-      return NextResponse.json({
-        access_token: callData.access_token,
-        call_id: callData.call_id,
-        agentId: agentId,
-        configured: true,
-        callCreated: true,
-        clientIp: clientIp, // For debugging purposes
-      })
+      return NextResponse.json(
+        {
+          access_token: callData.access_token,
+          call_id: callData.call_id,
+          agentId: agentId,
+          configured: true,
+          callCreated: true,
+          clientIp: clientIp, // For debugging purposes
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "X-Robots-Tag": "noindex, nofollow",
+          },
+        }
+      )
     } catch (callError) {
       console.error("Web call creation error:", callError)
       return NextResponse.json({
