@@ -21,7 +21,7 @@ export function VoiceMessages({ messages, isTyping }: { messages: VoiceMessageIt
   }, [messages, isTyping])
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto font-sans">
       <ScrollArea className="h-full">
         <div
           className="p-3 md:p-4 space-y-3 md:space-y-4 min-h-[160px] overscroll-contain focus:outline-none focus-visible:ring-2 focus-visible:ring-ulinea-blue/40"
@@ -37,14 +37,14 @@ export function VoiceMessages({ messages, isTyping }: { messages: VoiceMessageIt
               className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[85%] p-2.5 md:p-3 rounded-lg text-sm md:text-base leading-snug break-words whitespace-pre-wrap ${
+                className={`max-w-[85%] p-2.5 md:p-3 rounded-lg text-sm md:text-base leading-snug break-words whitespace-pre-wrap font-sans ${
                   message.type === "user" 
                     ? "bg-[#0066CC] text-white shadow-md" 
                     : "bg-gray-100 text-gray-900"
                 }`}
               >
-                <p className={message.type === "user" ? "font-medium" : ""}>{message.text}</p>
-                <p className={`text-[10px] md:text-xs mt-1 ${
+                <p className={`font-sans ${message.type === "user" ? "font-medium" : ""}`}>{message.text}</p>
+                <p className={`text-[10px] md:text-xs mt-1 font-sans ${
                   message.type === "user" ? "text-white/80" : "text-gray-500"
                 }`}>
                   {new Date(message.timestamp).toLocaleTimeString()}

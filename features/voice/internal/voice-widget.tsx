@@ -648,13 +648,13 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
 
       {/* Input de teclado para conversación */}
       {voiceStatus === "connected" && (
-        <div className="border-t bg-white p-2.5 md:p-3 flex-shrink-0 sticky bottom-0 z-20">
+        <div className="border-t bg-white p-2.5 md:p-3 flex-shrink-0 sticky bottom-0 z-20 font-sans">
           {SHOW_TRANSCRIPTION_BAR && currentTranscription && currentTranscription !== "Escribe tu mensaje aquí..." && (
             <div className="mb-2 md:mb-3 sticky top-0 z-10">
-              <div className="flex items-center gap-2 border border-black/10 rounded-md px-2 py-1.5 shadow-sm" style={{ backgroundColor: 'rgba(0, 102, 204, 0.1)' }}>
-                <span className="text-[11px] md:text-xs font-semibold whitespace-nowrap" style={{ color: 'rgb(0, 82, 163)' }}>Transcripción en vivo:</span>
+              <div className="flex items-center gap-2 border border-black/10 rounded-md px-2 py-1.5 shadow-sm font-sans" style={{ backgroundColor: 'rgba(0, 102, 204, 0.1)' }}>
+                <span className="text-[11px] md:text-xs font-semibold whitespace-nowrap font-sans" style={{ color: 'rgb(0, 82, 163)' }}>Transcripción en vivo:</span>
                 <div className="flex-1 min-h-[20px] max-h-[72px] md:max-h-[96px] overflow-y-auto pr-1">
-                  <p className="text-sm md:text-base whitespace-pre-wrap break-words leading-snug" style={{ color: 'rgb(0, 72, 143)' }}>
+                  <p className="text-sm md:text-base whitespace-pre-wrap break-words leading-snug font-sans" style={{ color: 'rgb(0, 72, 143)' }}>
                     {currentTranscription}
                   </p>
                 </div>
@@ -662,7 +662,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                   onClick={() => {
                     try { navigator.clipboard.writeText(currentTranscription) } catch {}
                   }}
-                  className="text-xs md:text-sm font-medium px-1 hover:underline whitespace-nowrap"
+                  className="text-xs md:text-sm font-medium px-1 hover:underline whitespace-nowrap font-sans"
                   style={{ color: 'rgb(0, 82, 163)' }}
                   aria-label="Copiar transcripción"
                 >
@@ -686,7 +686,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                 }
               }}
               placeholder="Escribe tu mensaje..."
-              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none text-gray-900 placeholder-gray-500 text-sm md:text-base"
+              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none text-gray-900 placeholder-gray-500 text-sm md:text-base font-sans"
               onFocus={(e) => { e.target.style.borderColor = 'rgb(0, 102, 204)'; e.target.style.boxShadow = '0 0 0 1px rgb(0, 102, 204)' }}
               onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = '' }}
               style={{ fontSize: '16px' }}
@@ -694,7 +694,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
             <button
               onClick={handleTextInputSubmit}
               disabled={!textInput.trim()}
-              className="px-4 py-2 text-white rounded-md text-sm md:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap border border-black/10"
+              className="px-4 py-2 text-white rounded-md text-sm md:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap border border-black/10 font-sans"
               style={{ backgroundColor: 'rgb(0, 102, 204)' }}
               onMouseEnter={(e) => !textInput.trim() || (e.currentTarget.style.backgroundColor = 'rgb(0, 82, 163)')}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(0, 102, 204)'}
@@ -707,7 +707,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
             <div className="mt-2 text-center">
               <button
                 onClick={() => setCurrentTranscription("Escribe tu mensaje aquí...")}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
+                className="text-xs text-gray-500 hover:text-gray-700 underline font-sans"
               >
                 ¿Prefieres escribir en lugar de hablar?
               </button>
@@ -717,7 +717,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
       )}
 
       {isTextChatActive && (
-        <div className="border-t p-4 flex-shrink-0">
+        <div className="border-t p-4 flex-shrink-0 font-sans">
           <div className="flex space-x-2">
             <input
               type="text"
@@ -727,7 +727,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
               }}
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyPress(e)}
               placeholder="Escribe tu mensaje..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none font-sans"
               onFocus={(e) => { e.target.style.borderColor = 'rgb(0, 102, 204)'; e.target.style.boxShadow = '0 0 0 2px rgba(0, 102, 204, 0.2)' }}
               onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = '' }}
               disabled={isTyping}
@@ -735,7 +735,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
             <button
               onClick={() => { void sendTextMessage() }}
               disabled={!inputMessage.trim() || isTyping}
-              className="px-4 py-2 rounded-lg text-white disabled:opacity-50 border border-black/10"
+              className="px-4 py-2 rounded-lg text-white disabled:opacity-50 border border-black/10 font-sans"
               style={{ backgroundColor: 'rgb(0, 102, 204)' }}
               onMouseEnter={(e) => !inputMessage.trim() || isTyping || (e.currentTarget.style.backgroundColor = 'rgb(0, 82, 163)')}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(0, 102, 204)'}

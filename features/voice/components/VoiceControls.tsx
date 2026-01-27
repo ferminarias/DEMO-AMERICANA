@@ -39,7 +39,7 @@ export function VoiceControls({
     : undefined
 
   return (
-    <div className="border-t bg-gray-50 flex-shrink-0 max-h-[55vh] overflow-y-auto">
+    <div className="border-t bg-gray-50 flex-shrink-0 max-h-[55vh] overflow-y-auto font-sans">
       <div className="p-3 md:p-4 space-y-3">
         <Card className="border-black/10" style={{ backgroundColor: 'var(--unab-primary-light)' }}>
           <CardContent className="p-4">
@@ -50,8 +50,8 @@ export function VoiceControls({
                   ? (isMuted ? <MicOff className="h-5 w-5" strokeWidth={2.5} /> : <Mic className="h-5 w-5" strokeWidth={2.5} />)
                   : <Volume2 className="h-5 w-5" strokeWidth={2.5} />}
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm sm:text-base">Conversación por voz</p>
-                  <p className="text-xs sm:text-sm" style={{ color: 'var(--unab-primary-hover)' }}>Habla directamente con el asistente IA</p>
+                  <p className="font-medium text-sm sm:text-base font-sans">Conversación por voz</p>
+                  <p className="text-xs sm:text-sm font-sans" style={{ color: 'var(--unab-primary-hover)' }}>Habla directamente con el asistente IA</p>
                 </div>
               </div>
               <div className="flex space-x-2 flex-shrink-0 self-center sm:self-auto">
@@ -71,12 +71,12 @@ export function VoiceControls({
                   disabled={callDisabled}
                   aria-label={voiceStatus === "connected" ? "Terminar llamada" : "Iniciar llamada"}
                   title={callTitle}
-                  className={`h-9 px-3 sm:px-4 rounded-md text-white font-semibold shadow-sm whitespace-nowrap text-xs sm:text-sm ${voiceStatus === "connected" ? "bg-red-600 hover:bg-red-700" : ""} focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed border border-black/10`}
+                  className={`h-9 px-3 sm:px-4 rounded-md text-white font-semibold shadow-sm whitespace-nowrap text-xs sm:text-sm font-sans ${voiceStatus === "connected" ? "bg-red-600 hover:bg-red-700" : ""} focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed border border-black/10`}
                   style={voiceStatus !== "connected" ? { backgroundColor: 'var(--unab-primary)' } : undefined}
                   onMouseEnter={(e) => { if (voiceStatus !== "connected") e.currentTarget.style.backgroundColor = 'var(--unab-primary-hover)' }}
                   onMouseLeave={(e) => { if (voiceStatus !== "connected") e.currentTarget.style.backgroundColor = 'var(--unab-primary)' }}
                 >
-                  <span className="inline-flex items-center">
+                  <span className="inline-flex items-center font-sans">
                     <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1" strokeWidth={2.5} />
                     <span className="hidden xs:inline">{callLabel}</span>
                     <span className="xs:hidden">{isCallInProgress ? "Terminar" : "Llamar"}</span>
@@ -85,7 +85,7 @@ export function VoiceControls({
               </div>
             </div>
             {!hasElevenLabsConfig && !isCallInProgress && (
-              <p className="mt-3 text-xs bg-white/70 border border-black/10 rounded-md px-3 py-2" style={{ color: 'rgb(0, 82, 163)' }}>
+              <p className="mt-3 text-xs bg-white/70 border border-black/10 rounded-md px-3 py-2 font-sans" style={{ color: 'rgb(0, 82, 163)' }}>
                 El asistente de voz estará disponible en breve. Mientras tanto puedes usar el chat de texto, WhatsApp o el formulario de contacto.
               </p>
             )}

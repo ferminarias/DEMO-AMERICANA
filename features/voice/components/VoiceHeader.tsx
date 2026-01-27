@@ -13,7 +13,7 @@ interface VoiceHeaderProps {
 
 export function VoiceHeader({ getStatusColor, getStatusText, variant = "sheet", onClearHistory, showClearButton = false }: VoiceHeaderProps) {
   const baseContent = (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center justify-between gap-2 font-sans">
       <div className="flex-1 min-w-0">
         <p className="text-base md:text-lg font-semibold text-white">Asistente Americana</p>
         <p className="text-white/90 text-xs md:text-sm">Elige como quieres comunicarte</p>
@@ -40,11 +40,11 @@ export function VoiceHeader({ getStatusColor, getStatusText, variant = "sheet", 
   }
 
   return (
-    <SheetHeader className="p-4 border-b border-black/10 text-white flex-shrink-0" style={{ background: 'linear-gradient(to right, var(--unab-primary), var(--unab-primary-hover))' }}>
+    < className="p-4 border-b border-black/10 text-white flex-shrink-0 font-sans" style={{ background: 'linear-gradient(to right, var(--unab-primary), var(--unab-primary-hover))' }}>SheetHeader
       <div className="flex items-center justify-between">
         <div>
-          <SheetTitle className="text-base md:text-lg text-white">Asistente Americana</SheetTitle>
-          <SheetDescription className="text-white/90 text-xs md:text-sm">Elige como quieres comunicarte</SheetDescription>
+          <SheetTitle className="text-base md:text-lg text-white font-sans">Asistente Americana</SheetTitle>
+          <SheetDescription className="text-white/90 text-xs md:text-sm font-sans">Elige como quieres comunicarte</SheetDescription>
         </div>
         <div className="flex items-center space-x-2">
           <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor()}`} />
