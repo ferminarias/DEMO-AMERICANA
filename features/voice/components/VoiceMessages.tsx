@@ -31,9 +31,9 @@ export function VoiceMessages({ messages, isTyping }: { messages: VoiceMessageIt
           aria-relevant="additions text"
           aria-atomic="false"
         >
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <div
-              key={index}
+              key={message.id}
               className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
