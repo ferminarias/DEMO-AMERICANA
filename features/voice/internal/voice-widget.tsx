@@ -9,7 +9,7 @@ import { VoiceFab } from "@/features/voice/components/VoiceFab"
 import type { VoiceMessage as VoiceMessageType } from "@/lib/voice/types"
 import { CONTACT } from "@/lib/constants"
 import { sendMessageToBackend } from "@/lib/services/chat"
-import { startElevenLabsSession, safeEndSession, sendTextToElevenLabs } from "@/lib/services/elevenlabs"
+import { startRetellSession, endRetellSession } from "@/lib/services/retell"
 
 type VoiceMessage = VoiceMessageType
 
@@ -23,9 +23,9 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
   const [isOpen, setIsOpen] = React.useState(isEmbedMode)
   const [messages, setMessages] = React.useState([] as VoiceMessage[])
   const [voiceStatus, setVoiceStatus] = React.useState(
-    "idle" as "idle" | "asking-mic" | "getting-token" | "connecting" | "connected" | "error"
+    "idle" as "idle" | "asking-mic" | "creating-call" | "connecting" | "connected" | "error"
   )
-  const [hasElevenLabsConfig, setHasElevenLabsConfig] = React.useState(false as boolean)
+  const [hasRetellConfig, setHasRetellConfig] = React.useState(false as boolean)
   const [isMuted, setIsMuted] = React.useState(false as boolean)
   const sessionRef = React.useRef(null as any)
   const mediaStreamRef = React.useRef(null as MediaStream | null)
@@ -44,18 +44,18 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
   const SHOW_TRANSCRIPTION_BAR = false
 
   React.useEffect(() => {
-    const checkElevenLabsConfig = async () => {
+    const checkRetellConfig = async () => {
       try {
-        const response = await fetch("/api/elevenlabs/check-config")
+        const response = await fetch("/api/retell/check-config")
         const { configured } = await response.json()
-        setHasElevenLabsConfig(configured)
+        setHasRetellConfig(configured)
       } catch (error) {
-        console.log("[v0] ElevenLabs config check failed:", error)
-        setHasElevenLabsConfig(false)
+        console.log("[Retell] Config check failed:", error)
+        setHasRetellConfig(false)
       }
     }
 
-    checkElevenLabsConfig()
+    checkRetellConfig()
   }, [])
 
   // Detectar apertura del teclado en móviles para adaptar el layout
@@ -110,7 +110,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
 
 
   const startVoiceCall = async () => {
-    if (!hasElevenLabsConfig) {
+    if (!hasRetellConfig) {
       toast({
         title: "Asistente de voz no disponible",
         description: "Usa el chat de texto, WhatsApp o el formulario de contacto mientras terminamos la configuración.",
@@ -122,7 +122,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
       clearSimulationTimers()
       setMessages([])
       setVoiceStatus("asking-mic")
-      console.log("[v0] Starting voice call...")
+      console.log("[Retell] Starting voice call...")
 
       try {
         // Ensure previous stream is fully stopped before requesting a new one
@@ -130,7 +130,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
           if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach((t: MediaStreamTrack) => t.stop())
             mediaStreamRef.current = null
-            console.log("[v0] Previous microphone stream stopped before requesting a new one")
+            console.log("[Retell] Previous microphone stream stopped before requesting a new one")
           }
         } catch {}
 
@@ -140,12 +140,12 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
             noiseSuppression: true,
             autoGainControl: true,
             channelCount: 1,
-            sampleRate: 44100,
+            sampleRate: 24000,
             sampleSize: 16,
           },
         })
         mediaStreamRef.current = stream
-        console.log("[v0] Microphone access granted")
+        console.log("[Retell] Microphone access granted")
         try {
           stream.getAudioTracks().forEach((t: MediaStreamTrack) => {
             t.applyConstraints({
@@ -157,7 +157,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
           })
         } catch {}
       } catch (micError) {
-        console.error("[v0] Microphone access denied:", micError)
+        console.error("[Retell] Microphone access denied:", micError)
         setVoiceStatus("error")
         setMessages([
           {
@@ -169,103 +169,91 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
         return
       }
 
-      setVoiceStatus("getting-token")
-      console.log("[v0] Getting conversation token...")
+      setVoiceStatus("creating-call")
+      console.log("[Retell] Creating web call...")
 
-      const response = await fetch("/api/elevenlabs/token")
+      const response = await fetch("/api/retell/create-web-call", {
+        method: "POST",
+      })
       if (!response.ok) {
         const errorText = await response.text()
-        throw new Error("Token request failed (" + response.status + "): " + errorText)
+        throw new Error("Web call creation failed (" + response.status + "): " + errorText)
       }
 
-      const tokenData = await response.json()
-      console.log("[v0] Token response:", { ...tokenData, token: tokenData.token ? "[REDACTED]" : undefined })
+      const callData = await response.json()
+      console.log("[Retell] Call response:", { ...callData, access_token: callData.access_token ? "[REDACTED]" : undefined })
 
-      if (!tokenData.configured) {
-        throw new Error("ElevenLabs not configured")
+      if (!callData.configured) {
+        throw new Error("Retell AI not configured")
       }
 
       setVoiceStatus("connecting")
-      console.log("[v0] Initializing WebRTC session...")
+      console.log("[Retell] Initializing Retell session...")
 
-      if (tokenData.tokenGenerated && tokenData.token) {
+      if (callData.callCreated && callData.access_token) {
         try {
-          const conversation = await startElevenLabsSession({
-            agentId: tokenData.agentId,
-            token: tokenData.token,
+          const session = await startRetellSession({
+            accessToken: callData.access_token,
             handlers: {
-              onConnect: () => {
-                console.log("[v0] ElevenLabs WebRTC connected")
+              onCallStarted: () => {
+                console.log("[Retell] Call started")
                 setVoiceStatus("connected")
                 sessionActiveRef.current = true
               },
-              onDisconnect: () => {
-                console.log("[v0] ElevenLabs session disconnected")
+              onCallEnded: () => {
+                console.log("[Retell] Call ended")
                 sessionActiveRef.current = false
                 setVoiceStatus("idle")
               },
-              onMessage: (message: any) => {
-                console.log("[v0] Received message - Full object:", JSON.stringify(message, null, 2))
-                console.log("[v0] Message type:", typeof message)
-                console.log("[v0] Message keys:", Object.keys(message))
+              onAgentStartTalking: () => {
+                console.log("[Retell] Agent started talking")
+              },
+              onAgentStopTalking: () => {
+                console.log("[Retell] Agent stopped talking")
+              },
+              onUpdate: (update: any) => {
+                console.log("[Retell] Update received:", update)
 
                 if (!sessionActiveRef.current) {
-                  console.log("[v0] Ignoring message because session is not active")
+                  console.log("[Retell] Ignoring update because session is not active")
                   return
                 }
 
-                let messageText = ""
-                let messageType = "assistant"
-
-                if (message.message && message.message.trim()) {
-                  messageText = message.message
-                  messageType = message.source === "user" ? "user" : "assistant"
-                } else if (message.text && message.text.trim()) {
-                  messageText = message.text
-                  messageType = message.type === "user" ? "user" : "assistant"
-                } else if (message.content && message.content.trim()) {
-                  messageText = message.content
-                  messageType = message.role === "user" ? "user" : "assistant"
-                } else if (typeof message === "string" && message.trim()) {
-                  messageText = message
-                  messageType = "assistant"
-                }
-
-                if (messageText) {
-                  console.log("[v0] Adding message to chat:", messageText, "Type:", messageType)
-                  setMessages((prev: VoiceMessage[]) => [
-                    ...prev,
-                    {
-                      text: messageText,
-                      timestamp: Date.now(),
-                      type: messageType as "user" | "assistant",
-                    },
-                  ])
-                } else {
-                  console.log("[v0] No valid message text found in:", message)
+                // Retell envía las transcripciones en el objeto `transcript`
+                if (update.transcript && Array.isArray(update.transcript)) {
+                  // Procesar las últimas transcripciones
+                  update.transcript.forEach((item: any) => {
+                    if (item.content && item.content.trim()) {
+                      const messageType = item.role === "user" ? "user" : "assistant"
+                      
+                      // Evitar duplicados - solo agregar si el mensaje es nuevo
+                      setMessages((prev: VoiceMessage[]) => {
+                        const lastMessage = prev[prev.length - 1]
+                        if (lastMessage?.text === item.content && lastMessage?.type === messageType) {
+                          return prev
+                        }
+                        
+                        return [
+                          ...prev,
+                          {
+                            text: item.content,
+                            timestamp: Date.now(),
+                            type: messageType,
+                          },
+                        ]
+                      })
+                    }
+                  })
                 }
               },
               onError: (error: any) => {
-                console.error("[v0] ElevenLabs session error:", error)
-
-                if (error?.message?.includes("WebSocket")) {
-                  console.log("[v0] WebSocket error, allowing reconnection attempts")
-                  setMessages((prev: VoiceMessage[]) => [
-                    ...prev,
-                    {
-                      text: "Reconectando... Por favor espera un momento.",
-                      timestamp: Date.now(),
-                      type: "assistant",
-                    },
-                  ])
-                  return
-                }
+                console.error("[Retell] Session error:", error)
 
                 try {
                   sessionActiveRef.current = false
-                  safeEndSession(sessionRef.current)
+                  endRetellSession(sessionRef.current)
                 } catch (e) {
-                  console.error("[v0] Error while forcing session end after onError:", e)
+                  console.error("[Retell] Error while forcing session end after onError:", e)
                 }
                 if (mediaStreamRef.current) {
                   mediaStreamRef.current.getTracks().forEach((t: MediaStreamTrack) => t.stop())
@@ -281,29 +269,26 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                   },
                 ])
               },
-              onStatusChange: (status: string) => {
-                console.log("[v0] Status changed:", status)
-              },
-              onModeChange: (mode: string) => {
-                console.log("[v0] Mode changed:", mode)
+              onMetadata: (metadata: any) => {
+                console.log("[Retell] Metadata received:", metadata)
               },
             },
           })
 
-          sessionRef.current = conversation
-          console.log("[v0] Conversation session started successfully")
+          sessionRef.current = session
+          console.log("[Retell] Session started successfully")
         } catch (sdkError) {
-          console.error("[v0] ElevenLabs SDK error:", sdkError)
+          console.error("[Retell] SDK error:", sdkError)
           scheduleTranscriptionDemo()
           simulateVoiceConversation()
         }
       } else {
-        console.log("[v0] No token available, using simulation mode")
+        console.log("[Retell] No access token available, using simulation mode")
         scheduleTranscriptionDemo()
         simulateVoiceConversation()
       }
     } catch (error) {
-      console.error("[v0] Voice call error:", error)
+      console.error("[Retell] Voice call error:", error)
       setVoiceStatus("error")
 
       setMessages([
@@ -323,7 +308,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
     if (!textInput.trim()) return
 
     const messageText = textInput.trim()
-    console.log("[v0] Sending text input to ElevenLabs:", messageText)
+    console.log("[Retell] Sending text input:", messageText)
     
     // Add user message to chat immediately
     const userMessage: VoiceMessage = {
@@ -338,30 +323,10 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
     setTextInput("")
     setCurrentTranscription("")
 
-    // Primary method for WebRTC sessions: SDK helper
-    if (sessionRef.current?.conversation && typeof sessionRef.current.conversation.sendUserMessage === 'function') {
-      try {
-        // Optional: notify activity while typing
-        sessionRef.current.conversation.sendUserActivity?.()
-        sessionRef.current.conversation.sendUserMessage(messageText)
-        console.log("[v0] Text sent via conversation.sendUserMessage")
-        return
-      } catch (error) {
-        console.error("[v0] Error with conversation.sendUserMessage:", error)
-      }
-    }
-
-    // Fallback helper (may support websocket mode in the future)
-    if (sessionRef.current) {
-      const sentViaElevenLabs = sendTextToElevenLabs(sessionRef.current, messageText)
-      if (sentViaElevenLabs) {
-        console.log("[v0] Text sent successfully to ElevenLabs via fallback")
-        return
-      }
-    }
-
-    // Fallback to backend if all methods fail
-    console.log("[v0] All ElevenLabs methods failed, using backend fallback")
+    // Nota: Retell no soporta envío de mensajes de texto durante llamadas de voz
+    // Los mensajes de texto solo se pueden usar cuando no hay llamada activa
+    // Por ahora, usamos el backend como fallback
+    console.log("[Retell] Using backend fallback for text messages")
     sendMessage(messageText).then((response) => {
       const assistantMessage: VoiceMessage = {
         text: response,
@@ -428,10 +393,10 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
 
 
   const stopVoiceCall = () => {
-    console.log("[v0] Stopping voice call...")
+    console.log("[Retell] Stopping voice call...")
     try {
       if (sessionRef.current) {
-        safeEndSession(sessionRef.current)
+        endRetellSession(sessionRef.current)
         sessionRef.current = null
       }
       if (mediaStreamRef.current) {
@@ -439,7 +404,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
         mediaStreamRef.current = null
       }
     } catch (error) {
-      console.error("[v0] Error stopping voice call:", error)
+      console.error("[Retell] Error stopping voice call:", error)
     }
     sessionActiveRef.current = false
     clearSimulationTimers()
@@ -459,25 +424,29 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
 
 
   const toggleMute = () => {
-    if (!sessionRef.current?.conversation) {
-      console.warn("[v0] toggleMute called without active conversation")
+    if (!sessionRef.current?.client) {
+      console.warn("[Retell] toggleMute called without active session")
       return
     }
 
     try {
       setIsMuted((prev: boolean) => {
         const next = !prev
-        try {
-          sessionRef.current!.conversation.setMicMuted(next)
-        } catch (error) {
-          console.error("[v0] Error reaching ElevenLabs mute control:", error)
-          return prev
+        // Nota: Retell SDK no expone directamente control de mute
+        // Necesitarías implementar esto a nivel de MediaStream si es necesario
+        console.log("[Retell] Microphone", next ? "muted" : "unmuted")
+        
+        // Mute/unmute a nivel de MediaStream
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getAudioTracks().forEach((track) => {
+            track.enabled = !next
+          })
         }
-        console.log("[v0] Microphone", next ? "muted" : "unmuted")
+        
         return next
       })
     } catch (error) {
-      console.error("[v0] Error toggling mute:", error)
+      console.error("[Retell] Error toggling mute:", error)
     }
   }
 
@@ -551,15 +520,15 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
       case "connected":
         return "Conversación activa"
       case "connecting":
-        return "Conectando con ElevenLabs..."
-      case "getting-token":
-        return "Obteniendo token..."
+        return "Conectando con Retell AI..."
+      case "creating-call":
+        return "Creando llamada..."
       case "asking-mic":
         return "Solicitando permisos..."
       case "error":
         return "Error de conexión"
       default:
-        return hasElevenLabsConfig ? "Listo para conversar" : "Configuración pendiente"
+        return hasRetellConfig ? "Listo para conversar" : "Configuración pendiente"
     }
   }
 
@@ -567,7 +536,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
     const handleBeforeUnload = () => {
       try {
         if (sessionRef.current) {
-          safeEndSession(sessionRef.current)
+          endRetellSession(sessionRef.current)
         }
       } catch {}
       if (mediaStreamRef.current) {
@@ -640,8 +609,6 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
               value={textInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setTextInput(e.target.value)
-                // notify activity while typing if available
-                sessionRef.current?.conversation?.sendUserActivity?.()
               }}
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -688,7 +655,6 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
               value={inputMessage}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setInputMessage(e.target.value)
-                sessionRef.current?.conversation?.sendUserActivity?.()
               }}
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyPress(e)}
               placeholder="Escribe tu mensaje..."
@@ -726,7 +692,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
               setIsOpen(false)
             }
           }}
-          hasElevenLabsConfig={hasElevenLabsConfig}
+          hasElevenLabsConfig={hasRetellConfig}
         />
       )}
     </div>

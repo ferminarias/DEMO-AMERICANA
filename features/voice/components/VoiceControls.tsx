@@ -13,7 +13,7 @@ export function VoiceControls({
   goToForm,
   hasElevenLabsConfig,
 }: {
-  voiceStatus: "idle" | "asking-mic" | "getting-token" | "connecting" | "connected" | "error"
+  voiceStatus: "idle" | "asking-mic" | "creating-call" | "connecting" | "connected" | "error"
   isMuted: boolean
   toggleMute: () => void
   stopVoiceCall: () => void
@@ -23,14 +23,14 @@ export function VoiceControls({
   hasElevenLabsConfig: boolean
 }) {
   const isCallInProgress = voiceStatus === "connected"
-  const isBusy = voiceStatus === "asking-mic" || voiceStatus === "getting-token" || voiceStatus === "connecting"
+  const isBusy = voiceStatus === "asking-mic" || voiceStatus === "creating-call" || voiceStatus === "connecting"
   const callDisabled = (!hasElevenLabsConfig && !isCallInProgress) || isBusy
   const callLabel = isCallInProgress
     ? "Terminar"
     : voiceStatus === "connecting"
       ? "Conectando..."
-      : voiceStatus === "getting-token"
-        ? "Obteniendo token..."
+      : voiceStatus === "creating-call"
+        ? "Creando llamada..."
         : voiceStatus === "asking-mic"
           ? "Permitir micrófono"
           : "Iniciar llamada"

@@ -6,8 +6,8 @@ Widget de asistente de voz inteligente para la Universidad Autónoma de Bucarama
 
 ### ✨ Funcionalidades Principales
 - **Widget de Voz Flotante**: Botón naranja flotante con asistente de voz IA
-- **Integración ElevenLabs**: Conversación por voz en tiempo real
-- **Chat de Texto**: Opción de chat por texto durante la conversaciónf
+- **Integración Retell AI**: Conversación por voz en tiempo real
+- **Chat de Texto**: Opción de chat por texto durante la conversación
 - **Diseño Responsive**: Optimizado para todos los dispositivos
 - **Colores Personalizados**: Esquema de colores naranja (marca UNAB)
 - **Modo Embed**: Puede integrarse en iframes para WordPress u otros sitios
@@ -17,7 +17,7 @@ Widget de asistente de voz inteligente para la Universidad Autónoma de Bucarama
 - **Lenguaje**: TypeScript
 - **Estilos**: Tailwind CSS v4
 - **Componentes**: shadcn/ui
-- **IA de Voz**: ElevenLabs Conversational AI
+- **IA de Voz**: Retell AI (Conversational AI)
 - **WebRTC**: Para comunicación en tiempo real
 - **Analytics**: Vercel Analytics
 
@@ -26,7 +26,7 @@ Widget de asistente de voz inteligente para la Universidad Autónoma de Bucarama
 ### Prerrequisitos
 - Node.js 18+ 
 - npm, yarn o pnpm
-- Cuenta de ElevenLabs con API Key (requerido para el asistente de voz)
+- Cuenta de Retell AI con API Key (requerido para el asistente de voz)
 
 ### 1. Clonar el repositorio
 \`\`\`bash
@@ -49,9 +49,9 @@ Copia `.env.example` a `.env.local` y configura las variables:
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_NAME="Universidad ULINEA"
 
-# ElevenLabs Configuration (opcional - solo para asistente de voz)
-ELEVENLABS_API_KEY=your_elevenlabs_api_key
-ELEVENLABS_VOICE_ID=your_voice_id
+# Retell AI Configuration (opcional - solo para asistente de voz)
+RETELL_API_KEY=your_retell_api_key
+RETELL_AGENT_ID=your_agent_id
 
 # Security & Captcha (opcional)
 ENABLE_CAPTCHA=false
@@ -99,8 +99,8 @@ Visita `http://localhost:3000` para ver la aplicación.
 - Notificaciones con toasts
 
 ### Asistente de Voz
-- Integración con ElevenLabs Realtime API
-- Reconocimiento de voz (Web Speech API como fallback)
+- Integración con Retell AI Web SDK
+- Conversación de voz en tiempo real vía WebRTC
 - Síntesis de voz natural
 - Interfaz conversacional intuitiva
 - Manejo de errores y reconexión automática
