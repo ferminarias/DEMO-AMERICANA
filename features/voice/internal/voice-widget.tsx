@@ -32,8 +32,9 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
   const sessionActiveRef = React.useRef(false as boolean)
   const transcriptionTimeoutRef = React.useRef(null as number | null)
   const simulationTimeoutsRef = React.useRef([] as number[])
-  const lastAssistantMessageRef = React.useRef<string>("")
   const isAgentTalkingRef = React.useRef(false)
+  const lastTranscriptRef = React.useRef<string>("")
+  const pendingTranscriptRef = React.useRef<any[]>([])
 
   const [textMessages, setTextMessages] = React.useState([] as VoiceMessage[])
   const [inputMessage, setInputMessage] = React.useState("" as string)
@@ -123,6 +124,8 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
     try {
       clearSimulationTimers()
       setMessages([])
+      lastTranscriptRef.current = "" // Limpiar transcript anterior
+      pendingTranscriptRef.current = [] // Limpiar transcript pendiente
       setVoiceStatus("asking-mic")
       console.log("[Retell] Starting voice call...")
 
@@ -228,12 +231,25 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
               onAgentStartTalking: () => {
                 console.log("[Retell] Agent started talking")
                 isAgentTalkingRef.current = true
-                lastAssistantMessageRef.current = ""
               },
               onAgentStopTalking: () => {
                 console.log("[Retell] Agent stopped talking")
                 isAgentTalkingRef.current = false
-                // NO limpiar lastAssistantMessageRef aquí - lo necesitamos para evitar duplicados
+                
+                // Actualizar con el transcript pendiente cuando el agente termina de hablar
+                if (pendingTranscriptRef.current.length > 0) {
+                  const transcript = pendingTranscriptRef.current
+                  const transcriptMessages: VoiceMessage[] = transcript
+                    .filter((item: any) => item.content && item.content.trim())
+                    .map((item: any, index: number) => ({
+                      text: item.content.trim(),
+                      timestamp: Date.now() - (transcript.length - index) * 1000,
+                      type: item.role === "user" ? "user" : "assistant",
+                    }))
+                  
+                  console.log("[Retell] Updating messages after agent stopped talking")
+                  setMessages(transcriptMessages)
+                }
               },
               onUpdate: (update: any) => {
                 console.log("[Retell] Update received:", update)
@@ -243,78 +259,46 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
                   return
                 }
 
-                // Según documentación oficial de Retell:
-                // update.transcript contiene las últimas 5 oraciones del historial completo
-                // Cada item tiene { role: "agent"|"user", content: string, words: [...] }
-                // Debemos "replace/update the existing message based on the last item"
+                // Según recomendación del soporte de Retell:
+                // update.transcript es la fuente de verdad completa (últimas 5 oraciones)
+                // Debemos sincronizar nuestra UI directamente con el transcript completo
                 if (update.transcript && Array.isArray(update.transcript) && update.transcript.length > 0) {
-                  // Obtener el último utterance del transcript
-                  const lastUtterance = update.transcript[update.transcript.length - 1]
+                  // Crear una firma única del transcript para detectar cambios reales
+                  const transcriptSignature = update.transcript
+                    .map((item: any) => `${item.role}:${item.content?.trim() || ''}`)
+                    .join('|')
                   
-                  if (!lastUtterance?.content || !lastUtterance.content.trim()) {
+                  // Si el transcript no cambió desde el último update, ignorar
+                  if (transcriptSignature === lastTranscriptRef.current) {
+                    console.log("[Retell] Transcript unchanged, skipping update")
                     return
                   }
-
-                  const messageType = lastUtterance.role === "user" ? "user" : "assistant"
-                  const content = lastUtterance.content.trim()
-
-                  // Para mensajes del asistente, verificar si ya lo procesamos
-                  if (messageType === "assistant") {
-                    // Si ya procesamos este contenido exacto, ignorar
-                    if (lastAssistantMessageRef.current === content) {
-                      return
-                    }
+                  
+                  lastTranscriptRef.current = transcriptSignature
+                  pendingTranscriptRef.current = update.transcript
+                  
+                  // Si el agente está hablando, NO actualizar la UI aún
+                  // Esperamos a que termine de hablar (onAgentStopTalking)
+                  if (isAgentTalkingRef.current) {
+                    console.log("[Retell] Agent is talking, deferring UI update")
+                    return
                   }
+                  
+                  // El agente NO está hablando, actualizar la UI
+                  // (esto captura mensajes del usuario o cuando la conversación está en pausa)
+                  console.log("[Retell] Syncing messages with transcript, items:", update.transcript.length)
+                  
+                  // Convertir el transcript completo a mensajes
+                  const transcriptMessages: VoiceMessage[] = update.transcript
+                    .filter((item: any) => item.content && item.content.trim())
+                    .map((item: any, index: number) => ({
+                      text: item.content.trim(),
+                      timestamp: Date.now() - (update.transcript.length - index) * 1000, // Timestamps relativos
+                      type: item.role === "user" ? "user" : "assistant",
+                    }))
 
-                  setMessages((prev: VoiceMessage[]) => {
-                    const lastMsg = prev[prev.length - 1]
-
-                    // Caso 1: El agente está hablando Y el último mensaje es del asistente
-                    // -> ACTUALIZAR el mensaje existente (transcripción incremental)
-                    if (
-                      messageType === "assistant" &&
-                      isAgentTalkingRef.current &&
-                      lastMsg?.type === "assistant"
-                    ) {
-                      // Solo actualizar si el contenido cambió
-                      if (lastMsg.text === content) return prev
-                      
-                      console.log("[Retell] Updating assistant message (incremental)")
-                      lastAssistantMessageRef.current = content
-                      return [
-                        ...prev.slice(0, -1),
-                        {
-                          ...lastMsg,
-                          text: content,
-                          timestamp: Date.now(),
-                        },
-                      ]
-                    }
-
-                    // Caso 2: Es un mensaje nuevo (diferente tipo o contenido diferente)
-                    // -> CREAR nuevo mensaje
-                    if (lastMsg?.text !== content || lastMsg?.type !== messageType) {
-                      console.log("[Retell] Adding new message:", messageType, content.substring(0, 50) + "...")
-                      
-                      // Guardar el contenido del asistente para evitar duplicados futuros
-                      if (messageType === "assistant") {
-                        lastAssistantMessageRef.current = content
-                      }
-                      
-                      return [
-                        ...prev,
-                        {
-                          text: content,
-                          timestamp: Date.now(),
-                          type: messageType,
-                        },
-                      ]
-                    }
-
-                    // Caso 3: Es exactamente el mismo mensaje
-                    // -> NO hacer nada
-                    return prev
-                  })
+                  // Actualizar mensajes con el transcript completo
+                  setMessages(transcriptMessages)
                 }
               },
               onError: (error: any) => {
