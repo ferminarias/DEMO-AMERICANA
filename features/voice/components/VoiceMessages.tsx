@@ -39,7 +39,7 @@ export function VoiceMessages({ messages, isTyping }: { messages: VoiceMessageIt
               <div
                 className={`max-w-[85%] p-2.5 md:p-3 rounded-lg text-sm md:text-base leading-snug break-words whitespace-pre-wrap ${
                   message.type === "user" 
-                    ? "bg-[#E9A427] text-white shadow-md" 
+                    ? "bg-[#0066CC] text-white shadow-md" 
                     : "bg-gray-100 text-gray-900"
                 }`}
               >

@@ -404,7 +404,7 @@ export const FAQ_ITEMS: FAQItem[] = [
 export const CONTACT = {
   whatsappNumber: "5255960232001",
   whatsappDefaultMessage:
-    "¡Hola! Me interesa conocer más sobre los programas de UNAB. ¿Podrían brindarme información?",
+    "¡Hola! Me interesa conocer más sobre los programas de la Universidad Americana. ¿Podrían brindarme información?",
 }
 
 export const API = {

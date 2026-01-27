@@ -50,16 +50,16 @@ export default function VoiceEmbedPage() {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom right, rgba(221, 163, 67, 0.1), rgba(221, 163, 67, 0.2))' }}>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom right, rgba(0, 102, 204, 0.1), rgba(0, 102, 204, 0.2))' }}>
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md text-center border-2 border-black/10">
-          <h2 className="text-xl font-semibold mb-2" style={{ color: 'rgb(221, 163, 67)' }}>
+          <h2 className="text-xl font-semibold mb-2" style={{ color: 'rgb(0, 102, 204)' }}>
             Acceso No Autorizado
           </h2>
           <p className="text-gray-600 mb-4">
             Este widget solo puede usarse en sitios autorizados.
           </p>
           <p className="text-sm text-gray-500">
-            Contacta con UNAB para obtener acceso.
+            Contacta con Universidad Americana para obtener acceso.
           </p>
         </div>
       </div>

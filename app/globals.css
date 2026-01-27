@@ -2,10 +2,10 @@
 @import 'tw-animate-css';
 
 :root {
-  --unab-primary: #E9A427;
-  --unab-primary-hover: #d1941f;
-  --unab-primary-light: rgba(233, 164, 39, 0.1);
-  --unab-primary-border: rgba(233, 164, 39, 0.3);
+  --unab-primary: #0066CC;
+  --unab-primary-hover: #0052A3;
+  --unab-primary-light: rgba(0, 102, 204, 0.1);
+  --unab-primary-border: rgba(0, 102, 204, 0.3);
 }
 
 @custom-variant dark (&:is(.dark *));

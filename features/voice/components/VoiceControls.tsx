@@ -45,7 +45,7 @@ export function VoiceControls({
           <CardContent className="p-4">
             {/* Layout responsivo: horizontal en desktop, columna en móvil */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-              <div className="flex items-center space-x-2" style={{ color: 'rgb(181, 123, 27)' }}>
+              <div className="flex items-center space-x-2" style={{ color: 'rgb(0, 82, 163)' }}>
                 {voiceStatus === "connected"
                   ? (isMuted ? <MicOff className="h-5 w-5" strokeWidth={2.5} /> : <Mic className="h-5 w-5" strokeWidth={2.5} />)
                   : <Volume2 className="h-5 w-5" strokeWidth={2.5} />}
@@ -85,7 +85,7 @@ export function VoiceControls({
               </div>
             </div>
             {!hasElevenLabsConfig && !isCallInProgress && (
-              <p className="mt-3 text-xs bg-white/70 border border-black/10 rounded-md px-3 py-2" style={{ color: 'rgb(181, 123, 27)' }}>
+              <p className="mt-3 text-xs bg-white/70 border border-black/10 rounded-md px-3 py-2" style={{ color: 'rgb(0, 82, 163)' }}>
                 El asistente de voz estará disponible en breve. Mientras tanto puedes usar el chat de texto, WhatsApp o el formulario de contacto.
               </p>
             )}

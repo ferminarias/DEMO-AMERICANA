@@ -14,13 +14,13 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Asistente Virtual UNAB - Universidad Autónoma de Bucaramanga",
+  title: "Universidad Americana de Paraguay - Asistente Virtual",
   description:
-    "Asistente virtual inteligente de la Universidad UNAB. Conversa con nuestro asistente de voz para obtener información sobre programas académicos.",
-  keywords: "UNAB, Universidad Autónoma de Bucaramanga, asistente virtual, chatbot, educación superior",
-  authors: [{ name: "Universidad UNAB" }],
-  creator: "Universidad UNAB",
-  publisher: "Universidad UNAB",
+    "Asistente virtual inteligente de la Universidad Americana de Paraguay. Más de 30 años de orgullo, liderazgo, innovación, prestigio y trayectoria.",
+  keywords: "Universidad Americana, Paraguay, asistente virtual, chatbot, educación superior",
+  authors: [{ name: "Universidad Americana" }],
+  creator: "Universidad Americana",
+  publisher: "Universidad Americana",
   formatDetection: {
     email: false,
     address: false,
@@ -28,27 +28,27 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   openGraph: {
-    title: "Asistente Virtual UNAB",
+    title: "Universidad Americana de Paraguay - Asistente Virtual",
     description:
-      "Asistente virtual inteligente de la Universidad UNAB. Conversa con nuestro asistente de voz.",
+      "Asistente virtual inteligente de la Universidad Americana de Paraguay.",
     url: "/",
-    siteName: "Universidad UNAB",
+    siteName: "Universidad Americana",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Universidad UNAB",
+        alt: "Universidad Americana de Paraguay",
       },
     ],
-    locale: "es_CO",
+    locale: "es_PY",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Asistente Virtual UNAB",
+    title: "Universidad Americana de Paraguay - Asistente Virtual",
     description:
-      "Asistente virtual inteligente de la Universidad UNAB.",
+      "Asistente virtual inteligente de la Universidad Americana de Paraguay.",
     images: ["/og-image.jpg"],
   },
   robots: {
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-    generator: 'v0.app'
+  generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -71,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es-CO" suppressHydrationWarning>
+    <html lang="es-PY" suppressHydrationWarning>
       <body className={`font-sans ${inter.variable} antialiased`}>
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
