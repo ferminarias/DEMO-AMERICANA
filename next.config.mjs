@@ -12,16 +12,36 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Permitir embedding del iframe en cualquier dominio
+        // Permitir iframes en todas las rutas
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
+      {
+        // Permitir embedding del widget en cualquier dominio
         source: '/voice/embed',
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'ALLOWALL', // Permitir embedding en cualquier dominio
+            value: 'ALLOWALL',
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' *.wordpress.com *.wordpress.org localhost:* *", // Permite WordPress y localhost
+            value: "frame-ancestors *",
+          },
+        ],
+      },
+      {
+        // Permitir el HTML estático en iframe
+        source: '/americana.html',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
           },
         ],
       },
