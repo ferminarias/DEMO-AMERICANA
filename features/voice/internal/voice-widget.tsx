@@ -32,6 +32,8 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
   const sessionActiveRef = React.useRef(false as boolean)
   const transcriptionTimeoutRef = React.useRef(null as number | null)
   const simulationTimeoutsRef = React.useRef([] as number[])
+  const lastAssistantMessageRef = React.useRef<string>("")
+  const isAgentTalkingRef = React.useRef(false)
 
   const [textMessages, setTextMessages] = React.useState([] as VoiceMessage[])
   const [inputMessage, setInputMessage] = React.useState("" as string)
@@ -225,9 +227,13 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
               },
               onAgentStartTalking: () => {
                 console.log("[Retell] Agent started talking")
+                isAgentTalkingRef.current = true
+                lastAssistantMessageRef.current = ""
               },
               onAgentStopTalking: () => {
                 console.log("[Retell] Agent stopped talking")
+                isAgentTalkingRef.current = false
+                lastAssistantMessageRef.current = ""
               },
               onUpdate: (update: any) => {
                 console.log("[Retell] Update received:", update)
@@ -239,58 +245,76 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
 
                 // Retell envía las transcripciones en el objeto `transcript`
                 if (update.transcript && Array.isArray(update.transcript)) {
-                  // Crear un mapa de mensajes por rol para mantener solo el último de cada uno
-                  const transcriptMap = new Map<string, any>()
-                  
-                  update.transcript.forEach((item: any) => {
-                    if (item.content && item.content.trim()) {
-                      // Usar un identificador único por cada par rol-contenido
-                      const key = `${item.role}-${item.content.substring(0, 20)}`
-                      transcriptMap.set(key, item)
-                    }
-                  })
+                  // Obtener el último mensaje de cada tipo
+                  const userMessages = update.transcript.filter((item: any) => item.role === "user")
+                  const assistantMessages = update.transcript.filter((item: any) => item.role === "agent")
 
-                  // Procesar los mensajes únicos
-                  transcriptMap.forEach((item) => {
-                    const messageType = item.role === "user" ? "user" : "assistant"
-                    
-                    setMessages((prev: VoiceMessage[]) => {
-                      const lastMessage = prev[prev.length - 1]
-                      
-                      // Si el último mensaje es del mismo tipo (usuario o asistente)
-                      // y el contenido nuevo es más largo, actualizar en lugar de agregar
-                      if (
-                        lastMessage?.type === messageType &&
-                        item.content.length > lastMessage.text.length &&
-                        item.content.startsWith(lastMessage.text.substring(0, 10))
-                      ) {
-                        // Actualizar el último mensaje (transcripción incremental)
-                        return [
-                          ...prev.slice(0, -1),
-                          {
-                            ...lastMessage,
-                            text: item.content,
-                            timestamp: Date.now(),
-                          },
-                        ]
-                      }
-                      
-                      // Si es un mensaje completamente nuevo o de diferente tipo
-                      if (lastMessage?.text !== item.content) {
+                  // Procesar mensaje del usuario (solo el último)
+                  if (userMessages.length > 0) {
+                    const lastUserMessage = userMessages[userMessages.length - 1]
+                    if (lastUserMessage.content && lastUserMessage.content.trim()) {
+                      setMessages((prev: VoiceMessage[]) => {
+                        // Verificar si ya existe este mensaje de usuario
+                        const existingUserMsg = prev.find(
+                          m => m.type === "user" && m.text === lastUserMessage.content
+                        )
+                        if (existingUserMsg) return prev
+
                         return [
                           ...prev,
                           {
-                            text: item.content,
+                            text: lastUserMessage.content,
                             timestamp: Date.now(),
-                            type: messageType,
+                            type: "user",
                           },
                         ]
-                      }
-                      
-                      // Si es exactamente el mismo, no hacer nada
-                      return prev
-                    })
-                  })
+                      })
+                    }
+                  }
+
+                  // Procesar mensaje del asistente (solo el último, actualizar si está hablando)
+                  if (assistantMessages.length > 0) {
+                    const lastAssistantMessage = assistantMessages[assistantMessages.length - 1]
+                    if (lastAssistantMessage.content && lastAssistantMessage.content.trim()) {
+                      setMessages((prev: VoiceMessage[]) => {
+                        const lastMsg = prev[prev.length - 1]
+
+                        // Si el agente está hablando y el último mensaje es del asistente,
+                        // actualizar ese mensaje en lugar de crear uno nuevo
+                        if (
+                          isAgentTalkingRef.current &&
+                          lastMsg?.type === "assistant" &&
+                          lastMsg.text !== lastAssistantMessage.content
+                        ) {
+                          // Actualizar el último mensaje del asistente
+                          lastAssistantMessageRef.current = lastAssistantMessage.content
+                          return [
+                            ...prev.slice(0, -1),
+                            {
+                              ...lastMsg,
+                              text: lastAssistantMessage.content,
+                              timestamp: Date.now(),
+                            },
+                          ]
+                        }
+
+                        // Si no está hablando o es un mensaje nuevo, agregar
+                        if (lastMsg?.text !== lastAssistantMessage.content) {
+                          lastAssistantMessageRef.current = lastAssistantMessage.content
+                          return [
+                            ...prev,
+                            {
+                              text: lastAssistantMessage.content,
+                              timestamp: Date.now(),
+                              type: "assistant",
+                            },
+                          ]
+                        }
+
+                        return prev
+                      })
+                    }
+                  }
                 }
               },
               onError: (error: any) => {
