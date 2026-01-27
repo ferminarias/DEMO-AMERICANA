@@ -27,6 +27,7 @@ export function useRetellSession({
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle")
   const [hasRetellConfig, setHasRetellConfig] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
+  const [isAgentTalking, setIsAgentTalking] = useState(false)
   
   const sessionRef = useRef<any>(null)
   const sessionActiveRef = useRef(false)
@@ -114,10 +115,12 @@ export function useRetellSession({
           onAgentStartTalking: () => {
             console.log("[Retell] Agent started talking")
             isAgentTalkingRef.current = true
+            setIsAgentTalking(true)
           },
           onAgentStopTalking: () => {
             console.log("[Retell] Agent stopped talking")
             isAgentTalkingRef.current = false
+            setIsAgentTalking(false)
             onAgentStoppedTalking()
           },
           onUpdate: (update: any) => {
@@ -189,6 +192,7 @@ export function useRetellSession({
     setVoiceStatus,
     hasRetellConfig,
     isMuted,
+    isAgentTalking,
     sessionRef,
     createWebCall,
     startSession,

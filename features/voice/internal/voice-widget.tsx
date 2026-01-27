@@ -41,7 +41,8 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
     voiceStatus, 
     setVoiceStatus,
     hasRetellConfig, 
-    isMuted, 
+    isMuted,
+    isAgentTalking,
     createWebCall, 
     startSession,
     stopSession, 
@@ -270,6 +271,8 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
         variant={isEmbedMode ? "embed" : "sheet"}
         onClearHistory={clearHistory}
         showClearButton={messages.length > 0 && voiceStatus === "idle"}
+        voiceStatus={voiceStatus}
+        isAgentTalking={isAgentTalking}
       />
 
       <div className="flex-1 relative overflow-y-auto">
@@ -376,6 +379,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
       setIsOpen={setIsOpen}
       className={className}
       onClose={handleWidgetClose}
+      voiceStatus={voiceStatus}
     >
       {chatContent}
     </VoiceFab>
