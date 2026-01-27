@@ -19,16 +19,10 @@ export async function GET(request: NextRequest) {
     const allowedDomains = [
       'localhost',
       '127.0.0.1',
-      'v0-ulinea-website-build.vercel.app', // Tu propio dominio
-      'bot.dominiodepruebas.online',
-      'bot.ddev.site',
-      'wordpress.com',
-      'wordpress.org',
-        'unab.dominiodepruebas.online',
-        'agente-unab-demo-3h9y2vpud-ferminariasml-gmailcoms-projects.vercel.app',
-        'https://agente-unab-demo-3h9y2vpud-ferminariasml-gmailcoms-projects.vercel.app/',
-        'https://agente-unab-demo.vercel.app/',
-        'agente-unab-demo.vercel.app'
+      'demo-americana.vercel.app',
+      'americana.edu.py',
+      'www.americana.edu.py',
+      'vercel.app',
     ]
     
     // Validar si el origen está en la lista de dominios autorizados

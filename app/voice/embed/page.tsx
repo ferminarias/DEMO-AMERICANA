@@ -18,17 +18,10 @@ export default function VoiceEmbedPage() {
         const allowedDomains = [
           'localhost',
           '127.0.0.1',
-          'unab.dominiodepruebas.online',
-          'agente-unab-demo',
+          'demo-americana.vercel.app',
+          'americana.edu.py',
+          'www.americana.edu.py',
           'vercel.app',
-          'bot.dominiodepruebas.online',
-          'bot.ddev.site',
-          'wordpress.com',
-          'wordpress.org',
-          'unab.edu.co',
-          'www.unab.edu.co',
-          'agente-unab-demo.vercel.app'
-
         ]
         
         const isAllowed = allowedDomains.some(domain => 
