@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { headers } from "next/headers"
-import { retellCallLimiter } from "@/lib/ratelimit"
 
 export const dynamic = "force-dynamic"
 
@@ -12,56 +11,11 @@ export async function POST(request: NextRequest) {
     const realIp = headersList.get("x-real-ip")
     const clientIp = forwarded?.split(",")[0] || realIp || "unknown"
 
-    // Rate limiting para prevenir abuso
-    try {
-      await retellCallLimiter.consume(clientIp)
-    } catch (rateLimitError: any) {
-      const waitSeconds = Math.ceil((rateLimitError.msBeforeNext || 0) / 1000)
-      console.warn(`[RATE_LIMIT] IP ${clientIp} exceeded limit, wait ${waitSeconds}s`)
-      return NextResponse.json(
-        {
-          error: `Demasiadas solicitudes. Por favor, espera ${waitSeconds} segundos.`,
-          configured: false,
-        },
-        { 
-          status: 429,
-          headers: {
-            "Retry-After": waitSeconds.toString(),
-          }
-        },
-      )
-    }
+    console.log(`[RETELL] Create web call request from IP: ${clientIp}`)
 
-    // Validación de origen más robusta (servidor)
-    const origin = headersList.get("origin") || headersList.get("referer") || ""
-    const userAgent = headersList.get("user-agent") || ""
-
-    // Lista de dominios autorizados
-    const allowedDomains = [
-      "localhost",
-      "127.0.0.1",
-      "demo-americana.vercel.app",
-      "americana.edu.py",
-      "www.americana.edu.py",
-      "vercel.app",
-    ]
-
-    // Validar si el origen está en la lista de dominios autorizados
-    const isAuthorized = allowedDomains.some((domain) => origin.includes(domain))
-
-    // Log para debugging
-    console.log(`[RETELL] Request from: ${origin || "direct"}, Authorized: ${isAuthorized}`)
-
-    if (!isAuthorized && origin) {
-      console.warn(`[SECURITY] Blocked origin: ${origin}`)
-      return NextResponse.json(
-        {
-          error: "Acceso denegado desde este dominio",
-          configured: false,
-        },
-        { status: 403 },
-      )
-    }
+    // Log del origen para debugging
+    const origin = headersList.get("origin") || headersList.get("referer") || "direct"
+    console.log(`[RETELL] Request from origin: ${origin}`)
 
     const retellApiKey = process.env.RETELL_API_KEY
     const agentId = process.env.RETELL_AGENT_ID
