@@ -30,6 +30,10 @@ export function VoiceMessages({ messages, isTyping }: { messages: VoiceMessageIt
           aria-live="polite"
           aria-relevant="additions text"
           aria-atomic="false"
+          style={{ 
+            WebkitOverflowScrolling: 'touch', // Momentum scrolling en iOS
+            overscrollBehavior: 'contain' // Prevenir scroll bounce
+          }}
         >
           {messages.map((message) => (
             <div

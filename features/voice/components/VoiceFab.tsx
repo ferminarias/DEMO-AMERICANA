@@ -16,8 +16,8 @@ interface VoiceFabProps {
 export function VoiceFab({ isOpen, setIsOpen, className, children, onClose, voiceStatus = "idle" }: VoiceFabProps) {
   return (
     <div
-      className={`fixed right-6 z-50 gpu-boost ${className || ""}`}
-      style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
+      className={`fixed right-4 md:right-6 z-50 gpu-boost ${className || ""}`}
+      style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 1rem))" }}
     >
       <Sheet
         open={isOpen}

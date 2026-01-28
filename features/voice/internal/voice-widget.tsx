@@ -325,7 +325,7 @@ export const VoiceWidget = ({ className, variant = "default" }: VoiceWidgetProps
             <button
               onClick={handleTextInputSubmit}
               disabled={!textInput.trim()}
-              className="px-4 py-2 text-white rounded-md text-sm md:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap border border-black/10 font-sans"
+              className="px-3 md:px-4 py-2 text-white rounded-md text-sm md:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap border border-black/10 font-sans min-w-[70px]"
               style={{ backgroundColor: 'rgb(0, 102, 204)' }}
               onMouseEnter={(e) => !textInput.trim() || (e.currentTarget.style.backgroundColor = 'rgb(0, 82, 163)')}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(0, 102, 204)'}
