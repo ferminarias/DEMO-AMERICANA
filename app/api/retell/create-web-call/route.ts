@@ -2,6 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import { headers } from "next/headers"
 
 export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+// Headers para prevenir cache del navegador
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +35,10 @@ export async function POST(request: NextRequest) {
             "Retell AI no está configurado. El asistente de voz estará disponible una vez completada la configuración.",
           configured: false,
         },
-        { status: 200 },
+        { 
+          status: 200,
+          headers: NO_CACHE_HEADERS,
+        },
       )
     }
 
@@ -48,32 +59,47 @@ export async function POST(request: NextRequest) {
         const errorText = await retellResponse.text()
         console.error("Retell web call creation failed:", errorText)
 
-        return NextResponse.json({
-          agentId: agentId,
-          configured: true,
-          callCreated: false,
-          error: `Web call creation failed: ${errorText}`,
-        })
+        return NextResponse.json(
+          {
+            agentId: agentId,
+            configured: true,
+            callCreated: false,
+            error: `Web call creation failed: ${errorText}`,
+          },
+          {
+            headers: NO_CACHE_HEADERS,
+          }
+        )
       }
 
       const callData = await retellResponse.json()
 
-      return NextResponse.json({
-        access_token: callData.access_token,
-        call_id: callData.call_id,
-        agentId: agentId,
-        configured: true,
-        callCreated: true,
-        clientIp: clientIp, // For debugging purposes
-      })
+      return NextResponse.json(
+        {
+          access_token: callData.access_token,
+          call_id: callData.call_id,
+          agentId: agentId,
+          configured: true,
+          callCreated: true,
+          clientIp: clientIp, // For debugging purposes
+        },
+        {
+          headers: NO_CACHE_HEADERS,
+        }
+      )
     } catch (callError) {
       console.error("Web call creation error:", callError)
-      return NextResponse.json({
-        agentId: agentId,
-        configured: true,
-        callCreated: false,
-        error: callError instanceof Error ? callError.message : "Unknown error",
-      })
+      return NextResponse.json(
+        {
+          agentId: agentId,
+          configured: true,
+          callCreated: false,
+          error: callError instanceof Error ? callError.message : "Unknown error",
+        },
+        {
+          headers: NO_CACHE_HEADERS,
+        }
+      )
     }
   } catch (error) {
     console.error("Retell API error:", error)
@@ -82,7 +108,10 @@ export async function POST(request: NextRequest) {
         error: "Error interno del servidor",
         configured: false,
       },
-      { status: 500 },
+      { 
+        status: 500,
+        headers: NO_CACHE_HEADERS,
+      },
     )
   }
 }

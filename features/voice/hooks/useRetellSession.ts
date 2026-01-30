@@ -73,6 +73,12 @@ export function useRetellSession({
 
     const response = await fetch("/api/retell/create-web-call", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+      },
+      cache: "no-store",
     })
     
     if (!response.ok) {
